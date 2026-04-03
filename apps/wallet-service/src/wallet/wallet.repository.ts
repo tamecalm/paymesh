@@ -36,7 +36,7 @@ export class WalletRepository {
 
   async updateBalance(
     id: string,
-    balance: number,
+    balance: Prisma.Decimal,
     executor: PrismaExecutor = this.prisma,
   ): Promise<Wallet> {
     return executor.wallet.update({
