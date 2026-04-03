@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient, type Wallet } from '@prisma/client';
+import { Prisma, PrismaClient, type Wallet } from '@prisma/client';
 import { InsufficientBalanceException } from '../common/exceptions/insufficient-balance.exception';
 import { WalletNotFoundException } from '../common/exceptions/wallet-not-found.exception';
 import { WalletRepository } from './wallet.repository';
