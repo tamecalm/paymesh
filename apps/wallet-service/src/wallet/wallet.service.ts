@@ -1,4 +1,4 @@
-import { status } from '@grpc/grpc-js';
+import { Metadata, status } from '@grpc/grpc-js';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -27,7 +27,9 @@ export class WalletService implements OnModuleInit {
 
   async createWallet(dto: CreateWalletDto): Promise<WalletResponseDto> {
     try {
-      await firstValueFrom(this.userServiceClient.getUserById({ id: dto.userId }));
+      const meta = new Metadata();
+      meta.set('x-api-key', process.env.GRPC_API_KEY ?? '');
+      await firstValueFrom(this.userServiceClient.getUserById({ id: dto.userId }, meta));
     } catch {
       throw new UserNotFoundException();
     }
