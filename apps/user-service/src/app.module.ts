@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { GrpcExceptionFilter } from './common/filters/grpc-exception.filter';
+import { GrpcApiKeyGuard } from './common/guards/grpc-api-key.guard';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { UserModule } from './user/user.module';
 
@@ -11,6 +12,10 @@ import { UserModule } from './user/user.module';
     {
       provide: APP_FILTER,
       useClass: GrpcExceptionFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: GrpcApiKeyGuard,
     },
     {
       provide: APP_INTERCEPTOR,
