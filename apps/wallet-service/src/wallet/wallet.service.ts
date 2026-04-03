@@ -57,11 +57,11 @@ export class WalletService implements OnModuleInit {
   }
 
   async creditWallet(data: {
-    wallet_id: string;
+    walletId: string;
     amount: number;
   }): Promise<WalletResponseDto> {
     const wallet = await this.walletCreditDebitService.creditWallet(
-      data.wallet_id,
+      data.walletId,
       data.amount,
     );
 
@@ -69,11 +69,11 @@ export class WalletService implements OnModuleInit {
   }
 
   async debitWallet(data: {
-    wallet_id: string;
+    walletId: string;
     amount: number;
   }): Promise<WalletResponseDto> {
     const wallet = await this.walletCreditDebitService.debitWallet(
-      data.wallet_id,
+      data.walletId,
       data.amount,
     );
 

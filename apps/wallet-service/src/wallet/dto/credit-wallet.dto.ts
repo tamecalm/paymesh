@@ -10,7 +10,7 @@ export class CreditWalletDto {
   @IsString()
   @IsNotEmpty()
   @IsUUID()
-  wallet_id!: string;
+  walletId!: string;
 
   @IsNumber()
   @IsPositive()

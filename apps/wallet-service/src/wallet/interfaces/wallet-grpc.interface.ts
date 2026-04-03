@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
 export interface ICreateWalletRequest {
-  user_id: string;
+  userId: string;
 }
 
 export interface IGetWalletRequest {
@@ -9,21 +9,21 @@ export interface IGetWalletRequest {
 }
 
 export interface ICreditWalletRequest {
-  wallet_id: string;
+  walletId: string;
   amount: number;
 }
 
 export interface IDebitWalletRequest {
-  wallet_id: string;
+  walletId: string;
   amount: number;
 }
 
 export interface IWalletResponse {
   id: string;
-  user_id: string;
+  userId: string;
   balance: number;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IWalletServiceGrpc {

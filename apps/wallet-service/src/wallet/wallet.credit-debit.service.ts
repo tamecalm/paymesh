@@ -34,7 +34,7 @@ export class WalletCreditDebitService {
       }
 
       if (wallet.balance < amount) {
-        throw new InsufficientBalanceException();
+        throw new InsufficientBalanceException(wallet.balance, amount);
       }
 
       const nextBalance = wallet.balance - amount;

@@ -10,7 +10,7 @@ export class DebitWalletDto {
   @IsString()
   @IsNotEmpty()
   @IsUUID()
-  wallet_id!: string;
+  walletId!: string;
 
   @IsNumber()
   @IsPositive()
