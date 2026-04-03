@@ -19,9 +19,11 @@ export class WalletCreditDebitService {
         throw new WalletNotFoundException();
       }
 
-      const nextBalance = wallet.balance + amount;
+      const currentBalance = new Prisma.Decimal(wallet.balance);
+      const creditAmount = new Prisma.Decimal(amount);
+      const newBalance = currentBalance.plus(creditAmount);
 
-      return this.walletRepository.updateBalance(walletId, nextBalance, tx);
+      return this.walletRepository.updateBalance(walletId, newBalance, tx);
     });
   }
 
@@ -33,13 +35,19 @@ export class WalletCreditDebitService {
         throw new WalletNotFoundException();
       }
 
-      if (wallet.balance < amount) {
-        throw new InsufficientBalanceException(wallet.balance, amount);
+      const currentBalance = new Prisma.Decimal(wallet.balance);
+      const debitAmount = new Prisma.Decimal(amount);
+
+      if (currentBalance.lessThan(debitAmount)) {
+        throw new InsufficientBalanceException(
+          parseFloat(currentBalance.toString()),
+          parseFloat(debitAmount.toString()),
+        );
       }
 
-      const nextBalance = wallet.balance - amount;
+      const newBalance = currentBalance.minus(debitAmount);
 
-      return this.walletRepository.updateBalance(walletId, nextBalance, tx);
+      return this.walletRepository.updateBalance(walletId, newBalance, tx);
     });
   }
 }
