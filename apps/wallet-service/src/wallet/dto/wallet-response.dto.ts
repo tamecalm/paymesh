@@ -13,7 +13,7 @@ export class WalletResponseDto {
     return new WalletResponseDto(
       wallet.id,
       wallet.userId,
-      wallet.balance,
+      parseFloat(wallet.balance.toString()),
       wallet.createdAt.toISOString(),
       wallet.updatedAt.toISOString(),
     );
