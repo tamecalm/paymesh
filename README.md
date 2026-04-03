@@ -356,3 +356,7 @@ pnpm test:cov
 cd apps/wallet-service
 pnpm test:cov
 ```
+
+## Limitations and Production Notes
+
+- Wallet balances are stored as floating-point values. This is acceptable for the assessment scope, but a production system should use a Decimal/DECIMAL type (or integer minor units) to avoid floating-point rounding issues in financial calculations.
