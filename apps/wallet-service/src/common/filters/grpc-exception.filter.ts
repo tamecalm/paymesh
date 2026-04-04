@@ -10,12 +10,7 @@ export class GrpcExceptionFilter implements RpcExceptionFilter<RpcException> {
 
     const error = exception.getError();
 
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      'message' in error
-    ) {
+    if (typeof error === 'object' && error !== null && 'code' in error && 'message' in error) {
       return throwError(() => error);
     }
 

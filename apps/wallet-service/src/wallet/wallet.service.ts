@@ -2,8 +2,8 @@ import { Metadata, status } from '@grpc/grpc-js';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { UserNotFoundException } from '../common/exceptions/user-not-found.exception'; 
-import { WalletNotFoundException } from '../common/exceptions/wallet-not-found.exception'; 
+import { UserNotFoundException } from '../common/exceptions/user-not-found.exception';
+import { WalletNotFoundException } from '../common/exceptions/wallet-not-found.exception';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { WalletResponseDto } from './dto/wallet-response.dto';
 import { IUserServiceGrpcClient } from './interfaces/user-service-grpc.interface';
@@ -21,8 +21,7 @@ export class WalletService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.userServiceClient =
-      this.client.getService<IUserServiceGrpcClient>('UserService');
+    this.userServiceClient = this.client.getService<IUserServiceGrpcClient>('UserService');
   }
 
   async createWallet(dto: CreateWalletDto): Promise<WalletResponseDto> {
@@ -58,26 +57,14 @@ export class WalletService implements OnModuleInit {
     return WalletResponseDto.fromPrisma(wallet);
   }
 
-  async creditWallet(data: {
-    walletId: string;
-    amount: number;
-  }): Promise<WalletResponseDto> {
-    const wallet = await this.walletCreditDebitService.creditWallet(
-      data.walletId,
-      data.amount,
-    );
+  async creditWallet(data: { walletId: string; amount: number }): Promise<WalletResponseDto> {
+    const wallet = await this.walletCreditDebitService.creditWallet(data.walletId, data.amount);
 
     return WalletResponseDto.fromPrisma(wallet);
   }
 
-  async debitWallet(data: {
-    walletId: string;
-    amount: number;
-  }): Promise<WalletResponseDto> {
-    const wallet = await this.walletCreditDebitService.debitWallet(
-      data.walletId,
-      data.amount,
-    );
+  async debitWallet(data: { walletId: string; amount: number }): Promise<WalletResponseDto> {
+    const wallet = await this.walletCreditDebitService.debitWallet(data.walletId, data.amount);
 
     return WalletResponseDto.fromPrisma(wallet);
   }

@@ -15,7 +15,7 @@ describe('GrpcApiKeyGuard', () => {
     jest.clearAllMocks();
   });
 
-  const buildContext = (metadataValues: string[] | undefined): ExecutionContext => {
+  const buildContext = (metadataValues: unknown[] | undefined): ExecutionContext => {
     const metadata = {
       get: jest.fn().mockImplementation((key: string) => {
         if (key === 'x-api-key') {
@@ -65,7 +65,7 @@ describe('GrpcApiKeyGuard', () => {
   });
 
   it('should throw UnauthenticatedException when metadata value is not a string', () => {
-    const context = buildContext([undefined as any]);
+    const context = buildContext([undefined]);
 
     expect(() => guard.canActivate(context)).toThrow(UnauthenticatedException);
   });

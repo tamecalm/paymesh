@@ -14,8 +14,5 @@ export interface IUserResponse {
 }
 
 export interface IUserServiceGrpcClient {
-  getUserById(
-    data: IGetUserByIdRequest,
-    metadata?: Metadata,
-  ): Observable<IUserResponse>;
+  getUserById(data: IGetUserByIdRequest, metadata?: Metadata): Observable<IUserResponse>;
 }

@@ -1,6 +1,6 @@
 import { Metadata, status } from '@grpc/grpc-js';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ClientGrpc, RpcException } from '@nestjs/microservices';
+import { RpcException } from '@nestjs/microservices';
 import { Prisma, type Wallet } from '@prisma/client';
 import { of, throwError } from 'rxjs';
 import { UserNotFoundException } from '../common/exceptions/user-not-found.exception';
@@ -118,13 +118,9 @@ describe('WalletService', () => {
 
     it('should throw UserNotFoundException when user does not exist', async () => {
       const dto = { userId: 'missing-user' };
-      userServiceClient.getUserById.mockReturnValue(
-        throwError(() => new UserNotFoundException()),
-      );
+      userServiceClient.getUserById.mockReturnValue(throwError(() => new UserNotFoundException()));
 
-      await expect(service.createWallet(dto)).rejects.toBeInstanceOf(
-        UserNotFoundException,
-      );
+      await expect(service.createWallet(dto)).rejects.toBeInstanceOf(UserNotFoundException);
       expect(walletRepository.findByUserId).not.toHaveBeenCalled();
       expect(walletRepository.create).not.toHaveBeenCalled();
     });

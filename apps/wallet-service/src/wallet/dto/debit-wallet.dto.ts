@@ -1,10 +1,4 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsPositive,
-  IsString,
-  IsUUID,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsPositive, IsString, IsUUID } from 'class-validator';
 
 export class DebitWalletDto {
   @IsString()

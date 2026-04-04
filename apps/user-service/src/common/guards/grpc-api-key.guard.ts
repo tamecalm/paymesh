@@ -4,9 +4,7 @@ import { UnauthenticatedException } from '../exceptions/unauthenticated.exceptio
 
 @Injectable()
 export class GrpcApiKeyGuard implements CanActivate {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const metadata = context.switchToRpc().getContext();
     const values = metadata.get('x-api-key');
     const incomingKey = values?.[0];

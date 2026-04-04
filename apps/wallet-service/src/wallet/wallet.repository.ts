@@ -7,10 +7,7 @@ type PrismaExecutor = PrismaClient | Prisma.TransactionClient;
 export class WalletRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findById(
-    id: string,
-    executor: PrismaExecutor = this.prisma,
-  ): Promise<Wallet | null> {
+  async findById(id: string, executor: PrismaExecutor = this.prisma): Promise<Wallet | null> {
     return executor.wallet.findUnique({
       where: { id },
     });
@@ -25,10 +22,7 @@ export class WalletRepository {
     });
   }
 
-  async create(
-    data: { userId: string },
-    executor: PrismaExecutor = this.prisma,
-  ): Promise<Wallet> {
+  async create(data: { userId: string }, executor: PrismaExecutor = this.prisma): Promise<Wallet> {
     return executor.wallet.create({
       data,
     });

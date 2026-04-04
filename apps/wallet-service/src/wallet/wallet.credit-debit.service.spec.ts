@@ -59,11 +59,13 @@ describe('WalletCreditDebitService', () => {
   describe('creditWallet', () => {
     it('should add the credit amount to the existing balance and return updated wallet', async () => {
       walletRepository.findById.mockResolvedValue(baseWallet);
-      walletRepository.updateBalance.mockImplementation(async (id: string, balance: Prisma.Decimal) => ({
-        ...baseWallet,
-        id,
-        balance,
-      }));
+      walletRepository.updateBalance.mockImplementation(
+        async (id: string, balance: Prisma.Decimal) => ({
+          ...baseWallet,
+          id,
+          balance,
+        }),
+      );
 
       const result = await service.creditWallet(baseWallet.id, 200.2);
 
@@ -95,11 +97,13 @@ describe('WalletCreditDebitService', () => {
         balance: new Prisma.Decimal('500.00'),
       };
       walletRepository.findById.mockResolvedValue(wallet);
-      walletRepository.updateBalance.mockImplementation(async (id: string, balance: Prisma.Decimal) => ({
-        ...wallet,
-        id,
-        balance,
-      }));
+      walletRepository.updateBalance.mockImplementation(
+        async (id: string, balance: Prisma.Decimal) => ({
+          ...wallet,
+          id,
+          balance,
+        }),
+      );
 
       const result = await service.debitWallet(wallet.id, 200.2);
 

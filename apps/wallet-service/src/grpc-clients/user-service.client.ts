@@ -10,9 +10,7 @@ export const USER_SERVICE_CLIENT_MODULE = ClientsModule.register([
     options: {
       package: 'user',
       protoPath: path.join(__dirname, '../../../../packages/proto/user.proto'),
-      url: `${process.env.USER_GRPC_HOST ?? 'localhost'}:${
-        process.env.USER_GRPC_PORT ?? 50051
-      }`,
+      url: `${process.env.USER_GRPC_HOST ?? 'localhost'}:${process.env.USER_GRPC_PORT ?? 50051}`,
     },
   },
 ]);
