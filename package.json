@@ -2,6 +2,7 @@
   "name": "paymesh",
   "private": true,
   "scripts": {
+    "start": "bash pm2/start.sh",
     "build": "pnpm -r run build",
     "lint": "eslint \"apps/**/*.ts\" --fix",
     "format": "prettier --write \"apps/**/*.ts\""
