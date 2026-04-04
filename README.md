@@ -1,6 +1,6 @@
-# paymesh
+# Paymesh
 
-paymesh is a backend system composed of two NestJS gRPC services that manage users and wallet balances against a shared PostgreSQL database through Prisma.
+Paymesh is a backend system composed of two NestJS gRPC services that manage users and wallet balances against a shared PostgreSQL database through Prisma.
 
 ## Tech Stack
 
@@ -54,29 +54,21 @@ cp .env.example .env
 openssl rand -hex 32
 ```
 
-3. Set the runtime values in this file.
-
-```text
-.env
-```
+3. Set the runtime values in `.env`.
 
 ```dotenv
 DATABASE_URL=postgresql://postgres:password@localhost:5432/paymesh?schema=public
 USER_GRPC_HOST=localhost
 USER_GRPC_PORT=50051
 WALLET_GRPC_PORT=50052
-GRPC_API_KEY=8d6b9d3f2bc1baf5db9a6fddbb2b4a9d0a2b09858c4e7427da0dc8a9c8a6b5f1
+GRPC_API_KEY=your-generated-key-here
 NODE_ENV=development
 LOG_LEVEL=info
 ```
 
 ## Database
 
-Run every Prisma migration command from this directory.
-
-```text
-packages/prisma
-```
+Run every Prisma migration command from the `packages/prisma` directory.
 
 ### Run the Initial Migration
 
@@ -97,42 +89,30 @@ pnpm prisma migrate deploy
 
 ### Regenerate the Prisma Client After Schema Changes
 
-1. Load the root environment file from the Prisma package directory.
-
 ```bash
 cd packages/prisma
 set -a
 source ../../.env
 set +a
-```
-
-2. Regenerate the Prisma client.
-
-```bash
 pnpm prisma generate
 ```
 
 ### Reset the Database
 
-1. Load the root environment file from the Prisma package directory.
+Run this in development only — it drops all data.
 
 ```bash
 cd packages/prisma
 set -a
 source ../../.env
 set +a
-```
-
-2. Reset the database and regenerate the Prisma client. Run this in development only because it drops all data.
-
-```bash
 pnpm prisma migrate reset --force
 pnpm prisma generate
 ```
 
-## Running the Services
+## Running the Services (Development)
 
-Run both services before you send any gRPC request.
+Run both services before you send any gRPC request. Each service must have the environment loaded before starting.
 
 1. Start `user-service`.
 
@@ -168,6 +148,111 @@ user-service gRPC server is running on port 50051
 wallet-service gRPC server is running on port 50052
 ```
 
+## Running the Services (Production)
+
+In production, both services are managed by PM2 for crash recovery and boot persistence. The PM2 ecosystem config lives in `pm2/ecosystem.config.js` and reads environment variables directly from the root `.env` file without shell wrappers.
+
+### Install PM2
+
+```bash
+npm install -g pm2
+```
+
+### Start Both Services
+
+The root `package.json` exposes a `start` script that runs the PM2 sequential start wrapper. Run this from the repository root.
+
+```bash
+pnpm start
+```
+
+This starts `user-service` first, waits for port `50051` to be ready, then starts `wallet-service`, and saves the PM2 process list.
+
+### Verify Both Services Are Running
+
+```bash
+pm2 status
+```
+
+### Enable Auto-Start on Server Reboot
+
+```bash
+pm2 startup
+```
+
+Copy and run the exact `sudo env PATH=...` command that PM2 prints, then save the process list.
+
+```bash
+pm2 save
+```
+
+### Useful PM2 Commands
+
+| Command | Description |
+| --- | --- |
+| `pm2 status` | Show running processes and their status |
+| `pm2 logs` | Stream logs from all services |
+| `pm2 logs user-service` | Stream logs from `user-service` only |
+| `pm2 restart all` | Restart all services (required after `.env` changes) |
+| `pm2 delete all` | Stop and remove all processes |
+
+## Nginx Reverse Proxy
+
+In production, Nginx sits in front of both services as a gRPC-aware reverse proxy. The config lives in `nginx/paymesh-grpc.conf`. Nginx uses `grpc_pass` (not `proxy_pass`) because gRPC requires HTTP/2 framing that `proxy_pass` does not support.
+
+### Install and Enable
+
+```bash
+sudo apt install -y nginx-full
+sudo ln -s ~/paymesh/nginx/paymesh-grpc.conf /etc/nginx/sites-enabled/paymesh-grpc.conf
+sudo nginx -t
+sudo systemctl start nginx
+sudo systemctl enable nginx
+sudo systemctl reload nginx
+```
+
+### Provision TLS with Certbot
+
+DNS for `paymesh.trimz.cc` must resolve directly to the EC2 public IP (Cloudflare proxy must be disabled and grey cloud, DNS only) before running certbot.
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d paymesh.trimz.cc
+```
+
+### Rollback Nginx
+
+```bash
+sudo rm /etc/nginx/sites-enabled/paymesh-grpc.conf
+sudo systemctl reload nginx
+```
+
+## Live Deployment
+
+Both gRPC services are deployed on an EC2 instance behind `paymesh.trimz.cc` with TLS termination at Nginx. HTTP traffic is automatically redirected to HTTPS.
+
+| Endpoint | Address |
+| --- | --- |
+| Health check | `https://paymesh.trimz.cc` |
+| User service gRPC (via Nginx TLS) | `paymesh.trimz.cc:443` |
+| User service gRPC (direct) | `paymesh.trimz.cc:50051` |
+| Wallet service gRPC (via Nginx TLS) | `paymesh.trimz.cc:443` |
+| Wallet service gRPC (direct) | `paymesh.trimz.cc:50052` |
+
+The health check endpoint returns a JSON response so you can verify the deployment is live at any time.
+
+```bash
+curl https://paymesh.trimz.cc
+```
+
+Expected response:
+
+```json
+{"status":"live","service":"paymesh","timestamp":"2026-04-04T..."}
+```
+
+> **Note:** The Cloudflare proxy must be disabled (grey cloud, DNS only) for the `paymesh` A record. Cloudflare's proxy blocks gRPC traffic on port 443.
+
 ## Authentication
 
 Every inbound gRPC call must include the `x-api-key` metadata header, and the value must match `GRPC_API_KEY`.
@@ -182,11 +267,17 @@ grpcurl -plaintext -import-path ./packages/proto -proto user.proto -H 'x-api-key
 
 ## Example Requests
 
-Run these commands from the repository root after both services are listening. `grpcurl` omits zero-valued proto fields, so a newly created wallet response does not print `balance` until the value is non-zero.
+### Local (Development)
+
+Run these commands from the repository root after both services are listening. Use `-plaintext` for local connections on ports `50051` and `50052`.
+
+### Remote (Production via Nginx TLS)
+
+Replace `localhost:50051` or `localhost:50052` with `paymesh.trimz.cc:443` and remove the `-plaintext` flag. TLS certificates from Let's Encrypt are publicly trusted and no extra flags needed.
+
+`grpcurl` omits zero-valued proto fields, so a newly created wallet response does not print `balance` until the value is non-zero.
 
 ### CreateUser
-
-Create a new user in `user.UserService`.
 
 ```bash
 grpcurl -plaintext -import-path ./packages/proto -proto user.proto -H 'x-api-key: your-api-key' -d '{"name":"README Example","email":"readme.20260403@paymesh.dev"}' localhost:50051 user.UserService/CreateUser
@@ -206,8 +297,6 @@ Example response:
 
 ### GetUserById
 
-Fetch the user you created from `user.UserService`.
-
 ```bash
 grpcurl -plaintext -import-path ./packages/proto -proto user.proto -H 'x-api-key: your-api-key' -d '{"id":"11111111-1111-4111-8111-111111111111"}' localhost:50051 user.UserService/GetUserById
 ```
@@ -226,8 +315,6 @@ Example response:
 
 ### CreateWallet
 
-Create a wallet for the user in `wallet.WalletService`.
-
 ```bash
 grpcurl -plaintext -import-path ./packages/proto -proto wallet.proto -H 'x-api-key: your-api-key' -d '{"user_id":"11111111-1111-4111-8111-111111111111"}' localhost:50052 wallet.WalletService/CreateWallet
 ```
@@ -244,8 +331,6 @@ Example response:
 ```
 
 ### GetWallet
-
-Fetch the wallet you created from `wallet.WalletService`.
 
 ```bash
 grpcurl -plaintext -import-path ./packages/proto -proto wallet.proto -H 'x-api-key: your-api-key' -d '{"id":"22222222-2222-4222-8222-222222222222"}' localhost:50052 wallet.WalletService/GetWallet
@@ -264,8 +349,6 @@ Example response:
 
 ### CreditWallet
 
-Credit the wallet with a decimal amount in `wallet.WalletService`.
-
 ```bash
 grpcurl -plaintext -import-path ./packages/proto -proto wallet.proto -H 'x-api-key: your-api-key' -d '{"wallet_id":"22222222-2222-4222-8222-222222222222","amount":300.30}' localhost:50052 wallet.WalletService/CreditWallet
 ```
@@ -283,8 +366,6 @@ Example response:
 ```
 
 ### DebitWallet
-
-Debit the wallet with a decimal amount in `wallet.WalletService`.
 
 ```bash
 grpcurl -plaintext -import-path ./packages/proto -proto wallet.proto -H 'x-api-key: your-api-key' -d '{"wallet_id":"22222222-2222-4222-8222-222222222222","amount":100.10}' localhost:50052 wallet.WalletService/DebitWallet
@@ -313,6 +394,14 @@ Example response:
 | `GRPC_API_KEY` | `user-service`, `wallet-service` | Shared inbound gRPC API key and forwarded service-to-service credential. | `change-me` |
 | `NODE_ENV` | `user-service`, `wallet-service` | Runtime environment label. | `development` |
 | `LOG_LEVEL` | `user-service`, `wallet-service` | Application log level. | `info` |
+
+## Root Scripts
+
+| Script | Command | Description |
+| --- | --- | --- |
+| `pnpm start` | `bash pm2/start.sh` | Start both services via PM2 in production |
+| `pnpm lint` | `eslint "apps/**/*.ts" --fix` | Lint and auto-fix all TypeScript source files |
+| `pnpm format` | `prettier --write "apps/**/*.ts"` | Format all TypeScript source files |
 
 ## Error Reference
 
@@ -360,3 +449,6 @@ pnpm test:cov
 ## Limitations and Production Notes
 
 - Wallet balances are stored as floating-point values. This is acceptable for the assessment scope, but a production system should use a Decimal/DECIMAL type (or integer minor units) to avoid floating-point rounding issues in financial calculations.
+- PM2 process list must be saved with `pm2 save` after any change to the running processes. Forgetting this means a server reboot will not restore the services.
+- Any change to `.env` requires `pm2 restart all` to take effect across both services simultaneously.
+- The Cloudflare proxy must remain disabled (grey cloud and DNS only) for the `paymesh` A record. Enabling the orange cloud blocks gRPC traffic on port 443.
