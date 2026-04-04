@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "start": "bash pm2/start.sh",
-    "build": "pnpm -r run build",
+    "build": "pnpm --filter @paymesh/user-service run build && pnpm --filter @paymesh/wallet-service run build",
     "lint": "eslint \"apps/**/*.ts\" --fix",
     "format": "prettier --write \"apps/**/*.ts\""
   },
